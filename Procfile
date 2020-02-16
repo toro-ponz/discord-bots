@@ -1,1 +1,1 @@
-sleep-keeper: python sleep-keeper/bot.py
+sleep-keeper: python sleep-keeper.py
