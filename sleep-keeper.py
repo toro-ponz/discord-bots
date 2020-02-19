@@ -1,4 +1,5 @@
 import os
+import time
 
 from datetime import datetime
 
@@ -31,7 +32,7 @@ class SleepKeeper(Client):
     @param token string (required)discord token.
     @param logger Logger (optional)utils.Logger instance.
     """
-    def __init__(self, token, logger = Logger('INFO')):
+    def __init__(self, token, logger=None):
         super().__init__()
 
         if (token is None):
@@ -39,6 +40,11 @@ class SleepKeeper(Client):
 
         self.token = token
         self.logger = logger
+
+        if (self.logger is None):
+            self.logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
+
+        self.run()
 
     """
     launch a bot.
@@ -50,21 +56,22 @@ class SleepKeeper(Client):
     exec when launched a bot.
     """
     async def on_ready(self):
-        await self.change_presence(status=Status.offline)
+        await self.change_presence(status=Status.idle)
 
-        self.exec.start()
+        self.watch.start()
 
     """
     check voice channel and force disconnect users.
     """
     @tasks.loop(seconds=30)
-    async def exec(self):
+    async def watch(self):
         now = datetime.now().strftime('%H:%M')
 
         if (now not in self.__class__.exectionTimeList):
             return
 
-        self.logger.info('exec disconnect at %s.' % (now))
+        self.logger.info('started execution disconnect at %s.' % (now))
+        await self.change_presence(status=Status.online)
         
         for guild in self.guilds:
             self.logger.debug('guild: %s.' % (guild.name))
@@ -72,40 +79,38 @@ class SleepKeeper(Client):
             for voice_channel in guild.voice_channels:
                 self.logger.debug('voice_channel: %s.' % (voice_channel.name))
                 await self.disconnect(guild, voice_channel)
+        
+        await self.change_presence(status=Status.idle)
+        self.logger.info('finished execution disconnect at %s.' % (now))
+
+        time.sleep(30)
 
     """
-    force disconnect all users from voice_channel
+    force disconnect all users on voice_channel
 
     @param guild discord.Guild (required)target guild.
     @param voice_channel discord.VoiceChannel (required)target voice channel.
     """
     async def disconnect(self, guild, voice_channel):
-        disconnect_users = []
+        disconnect_members = []
 
         for member in voice_channel.members:
-            username = member.name
+            disconnect_members.append(member)
 
-            if (member.nick is not None):
-                username = member.nick
-
-            self.logger.info('found still connected user %s on %s. force disconnect.' % (username, voice_channel.name))
-            disconnect_users.append(member)
-
-        if (len(disconnect_users) != 0):
-            await self.change_presence(status=Status.online)
-
-            for user in disconnect_users:
+        if (len(disconnect_members) != 0):
+            for member in disconnect_members:
+                display_name = self.get_user_display_name(member)
+                self.logger.info('found still connected user %s on %s. force disconnect.' % (display_name, voice_channel.name))
                 await member.edit(voice_channel=None)
             
-            await self.notify_disconnect(guild, voice_channel, disconnect_users)
-            await self.change_presence(status=Status.offline)
+            await self.notify_disconnect(guild, voice_channel, disconnect_members)
 
     """
     notify to disconnected users.
 
     @param guild discord.Guild (required)disconnected users guild.
     @param voice_channel discord.VoiceChannel (required)disconnected users voice channel.
-    @param disconnected_users array[discord.Member] (required)disconnected users list.
+    @param disconnected_users array[discord.User] (required)disconnected users list.
     """
     async def notify_disconnect(self, guild, voice_channel, disconnected_users):
         message = ''
@@ -136,8 +141,17 @@ class SleepKeeper(Client):
                 return channel
         
         return None
+    
+    """
+    return user guild name or account user name.
 
-logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
+    @param user discord.User
+    @return string
+    """
+    def get_user_display_name(self, user):
+        if (user.nick is not None):
+            return user.nick
+        
+        return user.name
 
-client = SleepKeeper(os.environ.get('TOKEN', None), logger)
-client.run()
+client = SleepKeeper(os.environ.get('TOKEN', None))
