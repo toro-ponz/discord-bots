@@ -2,8 +2,10 @@ import os
 
 from datetime import datetime
 
-from discord import Client
+from discord import Client, Status
 from discord.ext import tasks
+
+from utils import Logger
 
 """
 SleepKeeper is a discord bot that force disconnect all users in voice channel on weekday midnight.
@@ -26,15 +28,17 @@ class SleepKeeper(Client):
     """
     constructor.
 
-    @param token string [required]discord token.
+    @param token string (required)discord token.
+    @param logger Logger (optional)utils.Logger instance.
     """
-    def __init__(self, token):
+    def __init__(self, token, logger = Logger('INFO')):
         super().__init__()
 
         if (token is None):
             raise Exception('token is required.')
 
         self.token = token
+        self.logger = logger
 
     """
     launch a bot.
@@ -46,15 +50,9 @@ class SleepKeeper(Client):
     exec when launched a bot.
     """
     async def on_ready(self):
-        print('Logged on as {0}!'.format(self.user))
+        await self.change_presence(status=Status.offline)
 
-    """
-    exec when recieved a message.
-
-    @param message string recieved message.
-    """
-    async def on_message(self, message):
-        print('Message from {0.author}: {0.content}'.format(message))
+        self.exec.start()
 
     """
     check voice channel and force disconnect users.
@@ -65,17 +63,81 @@ class SleepKeeper(Client):
 
         if (now not in self.__class__.exectionTimeList):
             return
+
+        self.logger.info('exec disconnect at %s.' % (now))
         
-        self.disconnect()
-
-    """
-    force disconnect all users on voice_channel.
-    """
-    async def disconnect(self):
         for guild in self.guilds:
-            for voice_channel in guild.voice_channels:
-                for member in voice_channel.members:
-                    member.edit(voice_channel=None)
+            self.logger.debug('guild: %s.' % (guild.name))
 
-client = SleepKeeper(os.environ.get('TOKEN', None))
+            for voice_channel in guild.voice_channels:
+                self.logger.debug('voice_channel: %s.' % (voice_channel.name))
+                await self.disconnect(guild, voice_channel)
+
+    """
+    force disconnect all users from voice_channel
+
+    @param guild discord.Guild (required)target guild.
+    @param voice_channel discord.VoiceChannel (required)target voice channel.
+    """
+    async def disconnect(self, guild, voice_channel):
+        disconnect_users = []
+
+        for member in voice_channel.members:
+            username = member.name
+
+            if (member.nick is not None):
+                username = member.nick
+
+            self.logger.info('found still connected user %s on %s. force disconnect.' % (username, voice_channel.name))
+            disconnect_users.append(member)
+
+        if (len(disconnect_users) != 0):
+            await self.change_presence(status=Status.online)
+
+            for user in disconnect_users:
+                await member.edit(voice_channel=None)
+            
+            await self.notify_disconnect(guild, voice_channel, disconnect_users)
+            await self.change_presence(status=Status.offline)
+
+    """
+    notify to disconnected users.
+
+    @param guild discord.Guild (required)disconnected users guild.
+    @param voice_channel discord.VoiceChannel (required)disconnected users voice channel.
+    @param disconnected_users array[discord.Member] (required)disconnected users list.
+    """
+    async def notify_disconnect(self, guild, voice_channel, disconnected_users):
+        message = ''
+        channel_name = voice_channel.name.lower()
+        channel = self.find_channel(guild, channel_name)
+
+        if (channel is None):
+            self.logger.info('channel not found by name (%s)' % (channel_name))
+            return
+
+        for user in disconnected_users:
+            message += '<@%s> ' % (user.id)
+
+        message += '\ngood night.'
+
+        await channel.send(message)
+    
+    """
+    find channel by channel name from guild.
+
+    @param guild discord.Guild
+    @param name string search channel name.
+    @return discord.Channel or None
+    """
+    def find_channel(self, guild, name):
+        for channel in guild.channels:
+            if (channel.name == name):
+                return channel
+        
+        return None
+
+logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
+
+client = SleepKeeper(os.environ.get('TOKEN', None), logger)
 client.run()
