@@ -156,4 +156,4 @@ class SleepinessInc(Client):
         
         return user.name
 
-client = SleepinessInc(os.environ.get('TOKEN', None))
+client = SleepinessInc(os.environ.get('SI_TOKEN', None))
