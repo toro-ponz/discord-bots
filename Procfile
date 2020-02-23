@@ -1,1 +1,1 @@
-sleep-keeper: python sleep-keeper.py
+sleepiness-inc: python sleepiness-inc.py

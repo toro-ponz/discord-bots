@@ -9,9 +9,9 @@ from discord.ext import tasks
 from utils import Logger
 
 """
-SleepKeeper is a discord bot that force disconnect all users in voice channel on weekday midnight.
+SleepinessInc is a discord bot that force disconnect all users in voice channel on weekday midnight.
 """
-class SleepKeeper(Client):
+class SleepinessInc(Client):
 
     """
     exec disconnect time list.
@@ -154,4 +154,4 @@ class SleepKeeper(Client):
         
         return user.name
 
-client = SleepKeeper(os.environ.get('TOKEN', None))
+client = SleepinessInc(os.environ.get('TOKEN', None))
