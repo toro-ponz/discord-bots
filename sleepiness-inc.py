@@ -98,12 +98,14 @@ class SleepinessInc(Client):
             disconnect_members.append(member)
 
         if (len(disconnect_members) != 0):
+            await self.notify_disconnect(guild, voice_channel, disconnect_members)
+
+            time.sleep(10)
+
             for member in disconnect_members:
                 display_name = self.get_user_display_name(member)
                 self.logger.info('found still connected user %s on %s. force disconnect.' % (display_name, voice_channel.name))
                 await member.edit(voice_channel=None)
-            
-            await self.notify_disconnect(guild, voice_channel, disconnect_members)
 
     """
     notify to disconnected users.
