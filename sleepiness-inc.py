@@ -56,7 +56,7 @@ class SleepinessInc(Client):
     exec when launched a bot.
     """
     async def on_ready(self):
-        await self.change_presence(status=Status.idle)
+        await self.change_presence(status=Status.online)
 
         self.watch.start()
 
@@ -71,7 +71,6 @@ class SleepinessInc(Client):
             return
 
         self.logger.info('started execution disconnect at %s.' % (now))
-        await self.change_presence(status=Status.online)
         
         for guild in self.guilds:
             self.logger.debug('guild: %s.' % (guild.name))
@@ -80,7 +79,6 @@ class SleepinessInc(Client):
                 self.logger.debug('voice_channel: %s.' % (voice_channel.name))
                 await self.disconnect(guild, voice_channel)
         
-        await self.change_presence(status=Status.idle)
         self.logger.info('finished execution disconnect at %s.' % (now))
 
         time.sleep(30)
