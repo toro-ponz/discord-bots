@@ -58,7 +58,7 @@ class Logger():
     """
     output log on FATAL level.
     """
-    def error(self, text):
+    def fatal(self, text):
         if (not self.can_logging_fatal()):
             return
 
