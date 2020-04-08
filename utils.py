@@ -1,8 +1,15 @@
+import os
+
+from datetime import datetime
+from pytz import timezone
+
 LOGGING_LEVEL_DEBUG = 'DEBUG'
 LOGGING_LEVEL_INFO  = 'INFO'
 LOGGING_LEVEL_ERROR = 'ERROR'
 LOGGING_LEVEL_FATAL = 'FATAL'
 LOGGING_LEVEL_NONE  = 'NONE'
+
+TZ = os.getenv('TZ')
 
 """
 logging class on discord.
@@ -138,3 +145,16 @@ class Logger():
             return True
         
         return False
+
+"""
+datetime warrper class.
+"""
+class DateTime():
+    """
+    return now datetime.
+
+    @return datetime.datetime
+    """
+    @classmethod
+    def now(cls):
+        return datetime.now(tz=timezone(TZ)).replace(microsecond=0)

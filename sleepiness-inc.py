@@ -1,12 +1,13 @@
 import os
 import time
+import textwrap
 
-from datetime import datetime
+from datetime import timedelta
 
 from discord import Client, Status
 from discord.ext import tasks
 
-from utils import Logger
+from utils import Logger, DateTime
 
 """
 SleepinessInc is a discord bot that force disconnect all users in voice channel on weekday midnight.
@@ -17,7 +18,7 @@ class SleepinessInc(Client):
     exec disconnect time list.
     format: [HH:MM]. 
     """
-    exectionTimeList = [
+    exection_time_list = [
         '00:30',
         '01:00',
         '01:30',
@@ -33,7 +34,7 @@ class SleepinessInc(Client):
     not exec disconnect time list.
     format: [Weekday HH:MM]. 
     """
-    excludeTimeList = [
+    exclude_time_tist = [
         'Saturday 00:30',
         'Saturday 01:00',
         'Saturday 01:30',
@@ -49,7 +50,7 @@ class SleepinessInc(Client):
     """
     notify channel name.
     """
-    notifyChannelName = 'bed-room'
+    notify_channel_name = 'bed-room'
 
     """
     constructor.
@@ -65,9 +66,11 @@ class SleepinessInc(Client):
 
         self.token = token
         self.logger = logger
-        self.exectionTimeList = self.__class__.exectionTimeList
-        self.excludeTimeList = self.__class__.excludeTimeList
-        self.notifyChannelName = self.__class__.notifyChannelName
+        self.exection_time_list = self.__class__.exection_time_list
+        self.exclude_time_tist = self.__class__.exclude_time_tist
+        self.notify_channel_name = self.__class__.notify_channel_name
+
+        self.sleeping_list = {}
 
         if (self.logger is None):
             self.logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -89,15 +92,72 @@ class SleepinessInc(Client):
         self.watch.start()
 
     """
+    exec when received an message.
+
+    @param message discord.Message
+    """
+    async def on_message(self, message):
+        if (self.find_user_from_list(message.mentions, self.user.name) is None):
+            return
+
+        if (message.author.bot):
+            return
+        
+        await self.command(message)
+
+    """
+    exec command.
+
+    @param message discord.Message
+    """
+    async def command(self, message):
+        commands = message.content.split(' ')
+        guild = message.guild
+        channel = message.channel
+
+        if (commands is None or len(commands) < 2):
+            return
+        
+        if (commands[1] == 'run'):
+            for voice_channel in guild.voice_channels:
+                await self.disconnect(guild, voice_channel)
+            return
+        
+        if (commands[1] == 'list'):
+            await self.do_list(channel)
+            return
+        
+        if (commands[1] == 'sleep'):
+            if (len(commands) < 3):
+                await channel.send('minutes is required.')
+                return
+
+            await self.do_sleep(int(commands[2]), guild, channel)
+            return
+        
+        if (commands[1] == 'awake'):
+            await self.do_awake(guild, channel)
+            return
+
+        if (commands[1] == 'status'):
+            await self.do_status(guild, channel)
+            return
+
+        await self.do_help(channel)
+
+    """
     check voice channel and force disconnect users.
     """
     @tasks.loop(seconds=30)
     async def watch(self):
-        now = datetime.now()
+        now = DateTime.now()
 
-        if (now.strftime('%H:%M') not in self.exectionTimeList):
+        if (not await self.check_awake(self.guilds, now)):
             return
-        
+
+        if (now.strftime('%H:%M') not in self.exection_time_list):
+            return
+
         if (now.second > 31):
             return
 
@@ -105,6 +165,10 @@ class SleepinessInc(Client):
         
         for guild in self.guilds:
             self.logger.debug('guild: %s.' % (guild.name))
+
+            if (self.sleeping_list.get(guild.id) is not None):
+                self.logger.info('sleeping guild: %s.' % (guild.name))
+                return
 
             for voice_channel in guild.voice_channels:
                 self.logger.debug('voice_channel: %s.' % (voice_channel.name))
@@ -119,12 +183,12 @@ class SleepinessInc(Client):
     @param voice_channel discord.VoiceChannel (required)target voice channel.
     """
     async def disconnect(self, guild, voice_channel):
-        now = datetime.now()
+        now = DateTime.now()
         disconnect_members = []
-        notify_channel = self.find_channel(guild, self.notifyChannelName)
+        notify_channel = self.find_channel(guild, self.notify_channel_name)
 
         if (notify_channel is None):
-            self.logger.info('not found notify channel. channel_name = ' % (self.notifyChannelName))
+            self.logger.info('not found notify channel. channel_name = ' % (self.notify_channel_name))
             return
 
         for member in voice_channel.members:
@@ -135,7 +199,7 @@ class SleepinessInc(Client):
 
             time.sleep(10)
 
-            if (now.strftime('%A %H:%M') in self.excludeTimeList):
+            if (now.strftime('%A %H:%M') in self.exclude_time_tist):
                 joke_message = 'It`s %s!\nHave a nice weekend!' % (now.strftime('%A'))
                 await self.notify(notify_channel, joke_message, disconnect_members)
                 return
@@ -150,7 +214,7 @@ class SleepinessInc(Client):
 
     @param channel discord.Channel (required)notify channel.
     @param text string notify text.
-    @param users array[discord.User] (optional)users list.
+    @param users list[discord.User] (optional)users list.
     """
     async def notify(self, channel, text, users = None):
         message = ''
@@ -185,6 +249,17 @@ class SleepinessInc(Client):
                 return channel
         
         return None
+
+    """
+    find user by user name from user list.
+    @param users list[discord.User]
+    @param name string search user name.
+    @return discord.User or None
+    """
+    def find_user_from_list(self, users, name):
+        for user in users:
+            if (user.name == name):
+                return user
     
     """
     return user guild name or account user name.
@@ -197,5 +272,117 @@ class SleepinessInc(Client):
             return user.nick
         
         return user.name
+    
+    """
+    response exection time list.
+
+    @param channel discord.Channel
+    """
+    async def do_list(self, channel):
+        text = ''
+
+        if (len(self.exection_time_list) > 0):
+            text += 'execute:\n'
+
+            for time in self.exection_time_list:
+                text += '\t%s\n' % (time)
+
+        if (len(self.exclude_time_tist) > 0):
+            text += 'execlude:\n'
+
+            for time in self.exclude_time_tist:
+                text += '\t%s\n' % (time)
+        
+        await channel.send(text)
+    
+    """
+    response status.
+
+    @param guild discord.Guild
+    @param channel discord.Channel
+    """
+    async def do_status(self, guild, channel):
+        if (self.sleeping_list.get(guild.id) is not None):
+            await channel.send('sleepness inc is sleeping until %s.' % (self.sleeping_list[guild.id].isoformat()))
+            return
+        
+        await channel.send('sleepness inc is ruuning.')
+
+    """
+    sleep.
+
+    @param minutes int sleep minutes.
+    @param guild discord.Guild
+    @param channel discord.Channel
+    """
+    async def do_sleep(self, minutes, guild, channel):
+        if (minutes < 1):
+            await channel.send('minutes must be greater than or equal 1.')
+            return
+
+        if (self.sleeping_list.get(guild.id) is not None):
+            del self.sleeping_list[guild.id]
+
+        if (minutes > 120):
+            await channel.send('minutes must be less than 120.')
+            return
+
+        awake_time = DateTime.now().replace(microsecond=0) + timedelta(minutes=minutes)
+        text = 'start sleeping %s minutes. until %s.' % (minutes, awake_time.isoformat())
+        await channel.send(text)
+        await self.change_presence(status=Status.idle) # fix me.
+        self.sleeping_list[guild.id] = awake_time
+
+    """
+    awake from sleep.
+
+    @param guild discord.Guild
+    @param channel discord.Channel
+    """
+    async def do_awake(self, guild, channel):
+        if (self.sleeping_list.get(guild.id) is None):
+            return
+
+        await channel.send('good morning everyone!')
+        del self.sleeping_list[guild.id]
+        
+        await self.change_presence(status=Status.online) # fix me.
+
+    """
+    help.
+
+    @param channel discord.Channel
+    """
+    async def do_help(self, channel):
+        text = textwrap.dedent("""
+        ```
+        usage: @sleepness-inc <command> [<args>]
+        ---
+        run               do good night.
+        list              list exection time list & exclude time list.
+        sleep <minute>    sleep exection for minute.
+        awake             wake from sleep mode.
+        status            get ruuning status.
+        help              list available commands and some.
+        ```
+        """).strip()
+
+        await channel.send(text)
+
+    """
+    check awake.
+    
+    @param guilds list[discord.Guild]
+    @param now datetime.datetime
+    """
+    async def check_awake(self, guilds, now):
+        for guild in guilds:
+            if (self.sleeping_list.get(guild.id) is None):
+                continue
+
+            if (self.sleeping_list[guild.id] > now):
+                continue
+
+            await self.do_awake(guild, self.find_channel(guild, self.notify_channel_name))
 
 client = SleepinessInc(os.environ.get('SI_TOKEN', None))
