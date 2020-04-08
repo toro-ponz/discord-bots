@@ -18,13 +18,38 @@ class SleepinessInc(Client):
     format: [HH:MM]. 
     """
     exectionTimeList = [
+        '00:30',
         '01:00',
+        '01:30',
         '02:00',
+        '02:30',
         '03:00',
         '04:00',
         '05:00',
         '06:00',
     ]
+
+    """
+    not exec disconnect time list.
+    format: [Weekday HH:MM]. 
+    """
+    excludeTimeList = [
+        'Saturday 00:30',
+        'Saturday 01:00',
+        'Saturday 01:30',
+        'Saturday 02:00',
+        'Saturday 02:30',
+        'Sunday 00:30',
+        'Sunday 01:00',
+        'Sunday 01:30',
+        'Sunday 02:00',
+        'Sunday 02:30',
+    ]
+
+    """
+    notify channel name.
+    """
+    notifyChannelName = 'bed-room'
 
     """
     constructor.
@@ -40,6 +65,9 @@ class SleepinessInc(Client):
 
         self.token = token
         self.logger = logger
+        self.exectionTimeList = self.__class__.exectionTimeList
+        self.excludeTimeList = self.__class__.excludeTimeList
+        self.notifyChannelName = self.__class__.notifyChannelName
 
         if (self.logger is None):
             self.logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -65,9 +93,12 @@ class SleepinessInc(Client):
     """
     @tasks.loop(seconds=30)
     async def watch(self):
-        now = datetime.now().strftime('%H:%M')
+        now = datetime.now()
 
-        if (now not in self.__class__.exectionTimeList):
+        if (now.strftime('%H:%M') not in self.exectionTimeList):
+            return
+        
+        if (now.second > 31):
             return
 
         self.logger.info('started execution disconnect at %s.' % (now))
@@ -81,8 +112,6 @@ class SleepinessInc(Client):
         
         self.logger.info('finished execution disconnect at %s.' % (now))
 
-        time.sleep(30)
-
     """
     force disconnect all users on voice_channel
 
@@ -90,44 +119,59 @@ class SleepinessInc(Client):
     @param voice_channel discord.VoiceChannel (required)target voice channel.
     """
     async def disconnect(self, guild, voice_channel):
+        now = datetime.now()
         disconnect_members = []
+        notify_channel = self.find_channel(guild, self.notifyChannelName)
+
+        if (notify_channel is None):
+            self.logger.info('not found notify channel. channel_name = ' % (self.notifyChannelName))
+            return
 
         for member in voice_channel.members:
             disconnect_members.append(member)
 
         if (len(disconnect_members) != 0):
-            await self.notify_disconnect(guild, voice_channel, disconnect_members)
+            await self.notify(notify_channel, 'good night.', disconnect_members)
 
             time.sleep(10)
+
+            if (now.strftime('%A %H:%M') in self.excludeTimeList):
+                joke_message = 'It`s %s!\nHave a nice weekend!' % (now.strftime('%A'))
+                await self.notify(notify_channel, joke_message, disconnect_members)
+                return
 
             for member in disconnect_members:
                 display_name = self.get_user_display_name(member)
                 self.logger.info('found still connected user %s on %s. force disconnect.' % (display_name, voice_channel.name))
                 await member.edit(voice_channel=None)
-
+    
     """
-    notify to disconnected users.
+    notify to users.
 
-    @param guild discord.Guild (required)disconnected users guild.
-    @param voice_channel discord.VoiceChannel (required)disconnected users voice channel.
-    @param disconnected_users array[discord.User] (required)disconnected users list.
+    @param channel discord.Channel (required)notify channel.
+    @param text string notify text.
+    @param users array[discord.User] (optional)users list.
     """
-    async def notify_disconnect(self, guild, voice_channel, disconnected_users):
+    async def notify(self, channel, text, users = None):
         message = ''
-        channel_name = voice_channel.name.lower()
-        channel = self.find_channel(guild, channel_name)
 
         if (channel is None):
-            self.logger.info('channel not found by name (%s)' % (channel_name))
+            raise Exception('channel is None.')
+            return
+        
+        if (text is None):
+            raise Exception('text is None.')
             return
 
-        for user in disconnected_users:
-            message += '<@%s> ' % (user.id)
+        if (users is not None):
+            for user in users:
+                message += '<@%s> ' % (user.id)
+            message += '\n'
 
-        message += '\ngood night.'
+        message += text
 
         await channel.send(message)
-    
+
     """
     find channel by channel name from guild.
 
