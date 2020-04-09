@@ -95,6 +95,10 @@ class SleepinessInc(Client):
             
             if (self.exclude_time_list_per_guild.get(guild.id) is None):
                 self.exclude_time_list_per_guild[guild.id] = self.__class__.exclude_time_list
+            
+            notify_channel = self.find_channel(guild, self.notify_channel_name)
+            if (notify_channel is not None):
+                await notify_channel.send('Hello everyone! I\'m ready.')
 
         self.watch.start()
 
