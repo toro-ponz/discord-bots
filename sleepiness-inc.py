@@ -203,19 +203,14 @@ class SleepinessInc(Client):
     @tasks.loop(seconds=30)
     async def watch(self):
         now = DateTime.now()
-
-        if (not await self.check_awake(self.guilds, now)):
-            return
-
-        if (now.second > 31):
-            return
-
         self.logger.info('started execution disconnect at %s.' % (now))
-        
+
+        await self.check_awake(self.guilds, now)
+
         for guild in self.guilds:
             self.logger.debug('guild: %s.' % (guild.name))
 
-            if (not self.is_executable(guild, now)):
+            if (not await self.is_executable(guild, now)):
                 continue
 
             for voice_channel in guild.voice_channels:
@@ -247,7 +242,7 @@ class SleepinessInc(Client):
 
             time.sleep(10)
 
-            if (self.is_excludable(guild, now)):
+            if (await self.is_excludable(guild, now)):
                 message = 'It`s %s!\nHave a nice day!' % (now.strftime('%A'))
                 await self.notify(notify_channel, message, disconnect_members)
                 return
