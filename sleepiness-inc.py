@@ -361,8 +361,8 @@ class SleepinessInc(Client):
         run               do good night.
         list              list exection time list & exclude time list.
         sleep <minute>    sleep exection for minute.
-        awake             wake from sleep mode.
-        status            get ruuning status.
+        awake             wake up from sleep mode.
+        status            get running status.
         help              list available commands and some.
         ```
         """).strip()
