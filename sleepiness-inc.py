@@ -203,7 +203,7 @@ class SleepinessInc(Client):
     @tasks.loop(seconds=59)
     async def watch(self):
         now = DateTime.now()
-        self.logger.info('started execution disconnect at %s.' % (now))
+        self.logger.debug('started execution disconnect at %s.' % (now))
 
         await self.check_awake(self.guilds, now)
 
@@ -217,7 +217,7 @@ class SleepinessInc(Client):
                 self.logger.debug('voice_channel: %s.' % (voice_channel.name))
                 await self.disconnect(guild, voice_channel, now)
         
-        self.logger.info('finished execution disconnect at %s.' % (now))
+        self.logger.debug('finished execution disconnect at %s.' % (now))
 
     """
     force disconnect all users on voice_channel
