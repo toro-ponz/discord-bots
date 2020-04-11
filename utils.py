@@ -78,15 +78,6 @@ class Logger():
     """
     def can_logging_debug(self):
         return self.can_logging({
-        })
-    
-    """
-    return can logging debug level message.
-
-    @return bool
-    """
-    def can_logging_debug(self):
-        return self.can_logging({
             LOGGING_LEVEL_DEBUG
         })
     
