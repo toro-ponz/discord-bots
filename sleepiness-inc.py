@@ -200,7 +200,7 @@ class SleepinessInc(Client):
     """
     check voice channel and force disconnect users.
     """
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=59)
     async def watch(self):
         now = DateTime.now()
         self.logger.info('started execution disconnect at %s.' % (now))
