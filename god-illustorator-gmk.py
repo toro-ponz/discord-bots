@@ -1,4 +1,5 @@
 import os
+import random
 import time
 
 from datetime import datetime
@@ -33,7 +34,18 @@ class GodIllustratorGmk(Client):
     """
     target role name.
     """
-    role_name = os.environ.get('GIG_ROLE_NAME', 'illustrator')
+    role_name = os.environ.get('GIG_ROLE_NAME', 'Illustrator')
+
+    """
+    reply message list.
+    """
+    reply_message_list = [
+        'つべこべ言わずに絵描け',
+        'お前がそうやって御託を並べている間にも神絵師は努力している',
+        '今日は休め',
+        '左右反転をこまめにしろ',
+        '色塗って誤魔化す前にちゃんと線画描け',
+    ]
 
     """
     constructor.
@@ -53,7 +65,13 @@ class GodIllustratorGmk(Client):
         if (self.logger is None):
             self.logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
 
-        self.run()
+        # self.run()
+
+    """
+    destructor.
+    """
+    def __del__(self):
+        self.close()
 
     """
     launch a bot.
@@ -70,9 +88,23 @@ class GodIllustratorGmk(Client):
         self.watch.start()
 
     """
+    received an message.
+    """
+    async def on_message(self, message):
+        if (self.find_user_from_list(message.mentions, self.user.name) is None):
+            return 
+
+        if (message.author.bot):
+            return
+        
+        text = '<@%s>\n%s' % (message.author.id, random.choice(self.__class__.reply_message_list))
+
+        await message.channel.send(text)
+
+    """
     .
     """
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=86400)
     async def watch(self):
         now = datetime.now().strftime('%H:%M')
 
@@ -83,13 +115,22 @@ class GodIllustratorGmk(Client):
         
         for guild in self.guilds:
             self.logger.debug('guild: %s.' % (guild.name))
+
+            channel_name = self.__class__.channel_name
             channel = self.find_channel(guild, channel_name)
 
             if (channel is None):
-                self.logger.info('channel not found by name (%s)' % (channel_name))
+                self.logger.error('channel not found by name (%s)' % (channel_name))
                 break
 
-            self.notify(channel, 'Draw god illustration, right now.')
+            role_name = self.__class__.role_name
+            role = self.find_role(guild, role_name)
+
+            if (role is None):
+                self.logger.error('role not found by name (%s)' % (role_name))
+                break
+
+            await self.notify(channel, role, 'ワイが神絵師や！')
         
         self.logger.info('finished notify at %s.' % (now))
 
@@ -98,11 +139,12 @@ class GodIllustratorGmk(Client):
     """
     notify.
 
-    @param channel discord.CHannel (required)notify text channel.
+    @param channel discord.Channel (required)notify text channel.
+    @param role discord.Role (required)target mention role.
     @param text string (required)notify text.
     """
-    async def notify(self, channel, text, role_name):
-        message = '<@!%s>\n%s' % (self.__class__.role_name, text)
+    async def notify(self, channel, role, text):
+        message = '<@&%s>\n%s' % (role.id, text)
 
         await channel.send(message)
     
@@ -117,6 +159,34 @@ class GodIllustratorGmk(Client):
         for channel in guild.channels:
             if (channel.name == name):
                 return channel
+        
+        return None
+    
+    """
+    find role by role name from guild.
+
+    @param guild discord.Guild
+    @param name string search role name.
+    @return discord.Role or None
+    """
+    def find_role(self, guild, name):
+        for role in guild.roles:
+            if (role.name == name):
+                return role
+        
+        return None
+
+    """
+    find user by user name from user list.
+
+    @param users array[discord.User]
+    @param name string search user name.
+    @return discord.User or None
+    """
+    def find_user_from_list(self, users, name):
+        for user in users:
+            if (user.name == name):
+                return user
         
         return None
 
