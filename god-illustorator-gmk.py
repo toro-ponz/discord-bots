@@ -2,12 +2,10 @@ import os
 import random
 import time
 
-from datetime import datetime
-
 from discord import Client, Status
 from discord.ext import tasks
 
-from utils import Logger
+from utils import Logger, DateTime
 
 """
 GodIllustratorGmk is a discord bot that encourage drawing illustration.
@@ -27,9 +25,9 @@ class GodIllustratorGmk(Client):
     endTime = os.environ.get('GIG_END_TIME', '00:00')
 
     """
-    target text channel name.
+    notify channel name.
     """
-    channel_name = os.environ.get('GIG_CHANNEL_NAME', 'illustration')
+    notify_channel_name = os.environ.get('GIG_NOTIFY_CHANNEL_NAME', 'illustration')
 
     """
     target role name.
@@ -61,17 +59,12 @@ class GodIllustratorGmk(Client):
 
         self.token = token
         self.logger = logger
+        self.notify_channel_name = self.__class__.notify_channel_name
 
         if (self.logger is None):
             self.logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
 
-        # self.run()
-
-    """
-    destructor.
-    """
-    def __del__(self):
-        self.close()
+        self.run()
 
     """
     launch a bot.
@@ -85,7 +78,12 @@ class GodIllustratorGmk(Client):
     async def on_ready(self):
         await self.change_presence(status=Status.online)
 
-        self.watch.start()
+        for guild in self.guilds:
+            notify_channel = self.find_channel(guild, self.notify_channel_name)
+            if (notify_channel is not None):
+                await notify_channel.send('Hello everyone! I\'m ready.')
+
+        # self.watch.start()
 
     """
     received an message.
@@ -106,7 +104,7 @@ class GodIllustratorGmk(Client):
     """
     @tasks.loop(seconds=86400)
     async def watch(self):
-        now = datetime.now().strftime('%H:%M')
+        now = DateTime.now().strftime('%H:%M')
 
         if (now != self.__class__.beginTime):
             return
@@ -130,21 +128,24 @@ class GodIllustratorGmk(Client):
                 self.logger.error('role not found by name (%s)' % (role_name))
                 break
 
-            await self.notify(channel, role, 'ワイが神絵師や！')
+            await self.notify(channel, 'ワイが神絵師や！', role)
         
         self.logger.info('finished notify at %s.' % (now))
-
-        time.sleep(30)
 
     """
     notify.
 
     @param channel discord.Channel (required)notify text channel.
-    @param role discord.Role (required)target mention role.
     @param text string (required)notify text.
+    @param role discord.Role (optional)target mention role.
     """
-    async def notify(self, channel, role, text):
-        message = '<@&%s>\n%s' % (role.id, text)
+    async def notify(self, channel, text, role=None):
+        message = ''
+
+        if (role is not None):
+            message += '<@&%s>\n' % (role.id)
+
+        message += text
 
         await channel.send(message)
     
