@@ -16,23 +16,23 @@ class GodIllustratorGmk(Client):
     begin time.
     format: [HH:MM]. 
     """
-    beginTime = os.environ.get('GIG_BEGIN_TIME', '21:00')
+    beginTime = os.environ.get('BEGIN_TIME', '21:00')
 
     """
     end time.
     format: [HH:MM]. 
     """
-    endTime = os.environ.get('GIG_END_TIME', '00:00')
+    endTime = os.environ.get('END_TIME', '00:00')
 
     """
     notify channel name.
     """
-    notify_channel_name = os.environ.get('GIG_NOTIFY_CHANNEL_NAME', 'illustration')
+    notify_channel_name = os.environ.get('NOTIFY_CHANNEL_NAME', 'illustration')
 
     """
     target role name.
     """
-    role_name = os.environ.get('GIG_ROLE_NAME', 'Illustrator')
+    role_name = os.environ.get('ROLE_NAME', 'Illustrator')
 
     """
     reply message list.
@@ -191,4 +191,4 @@ class GodIllustratorGmk(Client):
         
         return None
 
-client = GodIllustratorGmk(os.environ.get('GIG_TOKEN', None))
+client = GodIllustratorGmk(os.environ.get('TOKEN', None))

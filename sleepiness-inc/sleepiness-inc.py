@@ -548,4 +548,4 @@ class SleepinessInc(Client):
         
         return False
 
-client = SleepinessInc(os.environ.get('SI_TOKEN', None))
+client = SleepinessInc(os.environ.get('TOKEN', None))
