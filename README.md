@@ -10,3 +10,5 @@ This repository is Discord Bots managed by @toro-ponz.
 * GodIllustrator, GMK.
   * encourage drawing illustration.
   * notify tips and illust time announcement.
+* Gopher
+  * golang testing bot.
