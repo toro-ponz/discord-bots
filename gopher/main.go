@@ -15,14 +15,15 @@ var (
 
 func main() {
 	discord, err := discordgo.New("Bot " + token)
+
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	discord.AddHandler(onMessageCreate)
-
 	err = discord.Open()
+
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -35,14 +36,76 @@ func main() {
 }
 
 func notifyReady(session *discordgo.Session) {
-	channel, err := session.Channel(notifyChannelName)
+	userGuilds, err := findUserGuilds(session)
 
 	if err != nil {
-		fmt.Println("Error getting notify channel: ", err)
+		fmt.Println("Error getting user guilds: ", err)
 		return
 	}
 
-	sendMessage(session, channel, "Hello everyone! I'm ready.")
+	for _, userGuild := range userGuilds {
+		channel, err := findChannelByNameFromUserGuild(session, userGuild, notifyChannelName)
+
+		if err != nil {
+			fmt.Println("Error getting notify channel: ", err)
+			continue
+		}
+
+		sendMessage(session, channel, "Hello everyone! I'm ready.")
+	}
+}
+
+func findUserGuilds(session *discordgo.Session) ([]*discordgo.UserGuild, error) {
+	userGuilds, limit, before, after := []*discordgo.UserGuild{}, 100, "", ""
+
+	for {
+		limitedUserGuild, err := session.UserGuilds(limit, before, after)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, userGuild := range limitedUserGuild {
+			userGuilds = append(userGuilds, userGuild)
+			after = userGuild.ID
+		}
+
+		if len(limitedUserGuild) < limit || len(limitedUserGuild) == 0 {
+			return userGuilds, nil
+		}
+	}
+}
+
+func findChannelByName(session *discordgo.Session, guild *discordgo.Guild, channelName string) (*discordgo.Channel, error) {
+	channels, err := session.GuildChannels(guild.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, channel := range channels {
+		if channel.Name == channelName {
+			return channel, nil
+		}
+	}
+
+	return nil, fmt.Errorf("not found %s channel", channelName)
+}
+
+func findChannelByNameFromUserGuild(session *discordgo.Session, userGuild *discordgo.UserGuild, channelName string) (*discordgo.Channel, error) {
+	channels, err := session.GuildChannels(userGuild.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, channel := range channels {
+		if channel.Name == channelName {
+			return channel, nil
+		}
+	}
+
+	return nil, fmt.Errorf("not found %s channel", channelName)
 }
 
 func onMessageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
