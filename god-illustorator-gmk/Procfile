@@ -1,1 +1,2 @@
 god-illustorator-gmk: python god-illustorator-gmk.py
+gopher: gopher/bin/gopher
