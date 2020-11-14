@@ -433,7 +433,7 @@ class SleepinessInc(Client):
             await channel.send('sleepness inc is sleeping until %s.' % (self.sleeping_list_per_guild[guild.id].isoformat()))
             return
         
-        await channel.send('sleepness inc is ruuning.')
+        await channel.send('sleepness inc is running.')
 
     """
     sleep.
