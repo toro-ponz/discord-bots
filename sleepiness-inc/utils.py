@@ -42,7 +42,7 @@ class Logger():
         if (not self.can_logging_debug()):
             return
 
-        print('[DEBUG]%s' % (text))
+        print('[DEBUG] %s' % (text))
 
     """
     output log on INFO level.
@@ -51,7 +51,7 @@ class Logger():
         if (not self.can_logging_info()):
             return
 
-        print('[INFO]%s' % (text))
+        print('[INFO] %s' % (text))
 
     """
     output log on ERROR level.
@@ -60,7 +60,7 @@ class Logger():
         if (not self.can_logging_error()):
             return
 
-        print('[ERROR]%s' % (text))
+        print('[ERROR] %s' % (text))
 
     """
     output log on FATAL level.
@@ -69,7 +69,7 @@ class Logger():
         if (not self.can_logging_fatal()):
             return
 
-        print('[FATAL]%s' % (text))
+        print('[FATAL] %s' % (text))
     
     """
     return can logging debug level message.
