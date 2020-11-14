@@ -236,7 +236,7 @@ class SleepinessInc(Client):
             return
 
         if (len(voice_channel.members) === 0):
-            self.logger.debug('voice_channel.member is empty on %s' % (voice_channel.name))
+            self.logger.debug('voice_channel.member is empty on %s.' % (voice_channel.name))
 
         for member in voice_channel.members:
             display_name = self.get_user_display_name(member)
