@@ -235,7 +235,12 @@ class SleepinessInc(Client):
             self.logger.info('not found notify channel. channel_name = ' % (self.notify_channel_name))
             return
 
+        if (len(voice_channel.members) === 0):
+            self.logger.debug('voice_channel.member is empty on %s' % (voice_channel.name))
+
         for member in voice_channel.members:
+            display_name = self.get_user_display_name(member)
+            self.logger.debug('voice_channel.member %s on %s.'% (display_name, voice_channel.name))
             disconnect_members.append(member)
 
         if (len(disconnect_members) != 0):
