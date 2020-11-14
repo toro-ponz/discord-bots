@@ -19,6 +19,7 @@ class SleepinessInc(Client):
     format: [HH:MM]. 
     """
     execution_time_list = [
+        '00:00',
         '00:30',
         '01:00',
         '01:30',
