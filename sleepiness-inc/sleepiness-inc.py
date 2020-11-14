@@ -211,12 +211,16 @@ class SleepinessInc(Client):
         for guild in self.guilds:
             self.logger.debug('guild: %s.' % (guild.name))
 
-            if (not await self.is_executable(guild, now)):
+            got_guild = self.get_guild(guild.id)
+            if (got_guild is None):
+                self.logger.error('guild is not found(id = %s).' % (guild.id))
+
+            if (not await self.is_executable(got_guild, now)):
                 continue
 
-            for voice_channel in guild.voice_channels:
+            for voice_channel in got_guild.voice_channels:
                 self.logger.debug('voice_channel: %s.' % (voice_channel.name))
-                await self.disconnect(guild, voice_channel, now)
+                await self.disconnect(got_guild, voice_channel, now)
         
         self.logger.debug('finished execution disconnect at %s.' % (now))
 
