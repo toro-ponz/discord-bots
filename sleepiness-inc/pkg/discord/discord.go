@@ -91,6 +91,10 @@ func (discord *Discord) disconnect() {
 		return
 	}
 
+	if discord.status != "online" {
+		return
+	}
+
 	for _, guild := range discord.session.State.Guilds {
 		channel, err := discord.findChannelByNameFromGuild(guild, notifyChannelName)
 		if err != nil {
@@ -332,24 +336,26 @@ func (discord *Discord) doRemove(channel *discordgo.Channel, args []string) erro
 }
 
 func (discord *Discord) doInclude(channel *discordgo.Channel, args []string) error {
-	if len(args) < 1 {
+	if len(args) < 2 {
 		return errors.New("doInclude required 1 argument(time).")
 	}
 
+	weekday := args[0]
 	time := args[0]
-	discord.timeList.Include(time)
+	discord.timeList.Include(fmt.Sprintf("%s %s", weekday, time))
 	discord.sendMessage(channel, IncludedMessage)
 
 	return nil
 }
 
 func (discord *Discord) doExclude(channel *discordgo.Channel, args []string) error {
-	if len(args) < 1 {
+	if len(args) < 2 {
 		return errors.New("doExclude required 1 argument(time).")
 	}
 
+	weekday := args[0]
 	time := args[0]
-	discord.timeList.Exclude(time)
+	discord.timeList.Exclude(fmt.Sprintf("%s %s", weekday, time))
 	discord.sendMessage(channel, ExcludedMessage)
 
 	return nil

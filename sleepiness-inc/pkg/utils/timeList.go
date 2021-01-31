@@ -87,18 +87,18 @@ func (timeList *TimeList) Remove(removeTime string) {
 	timeList.ExecuteTimeList = executeTimeList
 }
 
-func (timeList *TimeList) Include(executeTime string) {
-	timeList.ExcludeTimeList = append(timeList.ExcludeTimeList, executeTime)
-}
-
-func (timeList *TimeList) Exclude(excludeTime string) {
+func (timeList *TimeList) Include(includeTime string) {
 	excludeTimeList := []string{}
 
 	for _, excludeTime := range timeList.ExcludeTimeList {
-		if excludeTime != excludeTime {
+		if excludeTime != includeTime {
 			excludeTimeList = append(excludeTimeList, excludeTime)
 		}
 	}
 
 	timeList.ExcludeTimeList = excludeTimeList
+}
+
+func (timeList *TimeList) Exclude(excludeTime string) {
+	timeList.ExcludeTimeList = append(timeList.ExcludeTimeList, excludeTime)
 }
