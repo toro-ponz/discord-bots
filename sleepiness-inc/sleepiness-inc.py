@@ -26,6 +26,7 @@ class SleepinessInc(Client):
         '02:00',
         '02:30',
         '03:00',
+        '03:30',
         '04:00',
         '05:00',
         '06:00',
@@ -35,18 +36,7 @@ class SleepinessInc(Client):
     not exec disconnect time list.
     format: [%A %H:%M]. 
     """
-    exclude_time_list = [
-        'Saturday 00:30',
-        'Saturday 01:00',
-        'Saturday 01:30',
-        'Saturday 02:00',
-        'Saturday 02:30',
-        'Sunday 00:30',
-        'Sunday 01:00',
-        'Sunday 01:30',
-        'Sunday 02:00',
-        'Sunday 02:30',
-    ]
+    exclude_time_list = []
 
     """
     notify channel name.
