@@ -4,7 +4,7 @@ import textwrap
 
 from datetime import timedelta
 
-from discord import Client, Status
+from discord import Client, MemberCacheFlags, Intents, Status
 from discord.ext import tasks
 
 from utils import Logger, DateTime
@@ -50,7 +50,10 @@ class SleepinessInc(Client):
     @param logger Logger (optional)utils.Logger instance.
     """
     def __init__(self, token, logger=None):
-        super().__init__()
+        super().__init__(
+            intents = Intents.all(),
+            member_cache_flags = MemberCacheFlags.all()
+        )
 
         if (token is None):
             raise Exception('token is required.')
@@ -66,13 +69,7 @@ class SleepinessInc(Client):
         if (self.logger is None):
             self.logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
 
-        self.run()
-
-    """
-    launch a bot.
-    """
-    def run(self):
-        super().run(self.token)
+        self.run(self.token)
 
     """
     exec when launched a bot.
@@ -177,7 +174,7 @@ class SleepinessInc(Client):
 
             await self.do_sleep(int(commands[2]), guild, channel)
             return
-        
+
         if (commands[1] == 'awake'):
             await self.do_awake(guild, channel)
             return
