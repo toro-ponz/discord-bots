@@ -44,6 +44,11 @@ class SleepinessInc(Client):
     notify_channel_name = os.environ.get('NOTIFY_CHANNEL_NAME', 'bed-room')
 
     """
+    ignore channel names.
+    """
+    ignore_channel_names = os.environ.get('IGNORE_CHANNEL_NAMES', '').split(',')
+
+    """
     constructor.
 
     @param token string (required)discord token.
@@ -219,7 +224,11 @@ class SleepinessInc(Client):
         notify_channel = self.find_channel(guild, self.notify_channel_name)
 
         if (notify_channel is None):
-            self.logger.info('not found notify channel. channel_name = ' % (self.notify_channel_name))
+            self.logger.info('not found notify channel. channel_name = %s.' % (self.notify_channel_name))
+            return
+
+        if (voice_channel.name in self.ignore_channel_names):
+            self.logger.info('ignore channel. channel_name = %s.' % (voice_channel.name))
             return
 
         if (len(voice_channel.members) == 0):
