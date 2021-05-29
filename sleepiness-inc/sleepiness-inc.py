@@ -41,7 +41,7 @@ class SleepinessInc(Client):
     """
     notify channel name.
     """
-    notify_channel_name = 'bed-room'
+    notify_channel_name = os.environ.get('NOTIFY_CHANNEL_NAME', 'bed-room')
 
     """
     constructor.
