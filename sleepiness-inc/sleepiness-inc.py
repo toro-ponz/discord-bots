@@ -49,6 +49,11 @@ class SleepinessInc(Client):
     ignore_channel_names = os.environ.get('IGNORE_CHANNEL_NAMES', '').split(',')
 
     """
+    last exection time for use checing duplicate call.
+    """
+    last_executed_minute = None
+
+    """
     constructor.
 
     @param token string (required)discord token.
@@ -198,10 +203,15 @@ class SleepinessInc(Client):
     """
     check voice channel and force disconnect users.
     """
-    @tasks.loop(seconds=59)
+    @tasks.loop(seconds=50)
     async def watch(self):
         now = DateTime.now()
         self.logger.debug('started execution disconnect at %s.' % (now))
+
+        if (self.last_executed_minute == now.minute):
+            self.logger.debug('skip process for duplicated call.')
+            return
+        self.last_executed_minute = now.minute
 
         await self.check_awake(self.guilds, now)
 
