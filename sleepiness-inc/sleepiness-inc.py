@@ -74,8 +74,8 @@ class SleepinessInc(Client):
         if (self.logger is None):
             self.logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
 
+        self.logger.info('Application starting.')
         self.run(self.token)
-        self.logger.info('Application started.')
 
     """
     exec when launched a bot.
