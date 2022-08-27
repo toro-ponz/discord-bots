@@ -75,11 +75,14 @@ class SleepinessInc(Client):
             self.logger = Logger(os.environ.get('LOG_LEVEL', 'INFO'))
 
         self.run(self.token)
+        self.logger.info('Application started.')
 
     """
     exec when launched a bot.
     """
     async def on_ready(self):
+        self.logger.debug('on_ready')
+
         await self.change_presence(status=Status.online)
 
         for guild in self.guilds:
@@ -101,6 +104,8 @@ class SleepinessInc(Client):
     @param message discord.Message
     """
     async def on_message(self, message):
+        self.logger.debug('on_message')
+
         if (self.find_user_from_list(message.mentions, self.user.name) is None):
             return
 
