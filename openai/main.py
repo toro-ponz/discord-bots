@@ -129,14 +129,11 @@ class OpenAI(Client):
     """
     def do_openai(self, guild, role, content):
         messages = []
-        self.logger.debug(messages)
 
         if (self.chat_histories.get(guild.id) is not None):
             messages = self.chat_histories.get(guild.id)
-            self.logger.debug(messages)
 
         messages.append({'role': role, 'content': content})
-        self.logger.debug(messages)
 
         response = openai.ChatCompletion.create(
             model='gpt-3.5-turbo',
@@ -157,7 +154,9 @@ class OpenAI(Client):
     @param text string content of chat message.
     """
     async def do_user(self, guild, channel, text):
+        self.logger.debug('do_user: guild=%s, channel=%s, text=%s' % (guild.name, channel.name, text))
         reply = self.do_openai(guild, 'user', text)
+        self.logger.debug('do_user: reply=%s' % (reply))
         await channel.send(reply)
 
     """
@@ -168,7 +167,9 @@ class OpenAI(Client):
     @param text string content of chat message.
     """
     async def do_system(self, guild, channel, text):
+        self.logger.debug('do_system: guild=%s, channel=%s, text=%s' % (guild.name, channel.name, text))
         reply = self.do_openai(guild, 'system', text)
+        self.logger.debug('do_system: reply=%s' % (reply))
         await channel.send(reply)
 
     """
