@@ -127,7 +127,7 @@ class OpenAI(Client):
     @param role string role of openai message.
     @param content string content of openai message.
     """
-    def do_openai(self, guild, role, content):
+    async def do_openai(self, guild, role, content):
         messages = []
 
         if (self.chat_histories.get(guild.id) is not None):
@@ -135,7 +135,7 @@ class OpenAI(Client):
 
         messages.append({'role': role, 'content': content})
 
-        response = openai.ChatCompletion.create(
+        response = await openai.ChatCompletion.acreate(
             model='gpt-3.5-turbo',
             messages=messages,
         )
@@ -155,9 +155,11 @@ class OpenAI(Client):
     """
     async def do_user(self, guild, channel, text):
         self.logger.debug('do_user: guild=%s, channel=%s, text=%s' % (guild.name, channel.name, text))
-        reply = self.do_openai(guild, 'user', text)
-        self.logger.debug('do_user: reply=%s' % (reply))
-        await channel.send(reply)
+
+        async with channel.typing():
+            reply = await self.do_openai(guild, 'user', text)
+            self.logger.debug('do_user: reply=%s' % (reply))
+            await channel.send(reply)
 
     """
     send system message to openai.
@@ -168,9 +170,11 @@ class OpenAI(Client):
     """
     async def do_system(self, guild, channel, text):
         self.logger.debug('do_system: guild=%s, channel=%s, text=%s' % (guild.name, channel.name, text))
-        reply = self.do_openai(guild, 'system', text)
-        self.logger.debug('do_system: reply=%s' % (reply))
-        await channel.send(reply)
+
+        async with channel.typing():
+            reply = await self.do_openai(guild, 'system', text)
+            self.logger.debug('do_system: reply=%s' % (reply))
+            await channel.send(reply)
 
     """
     get chat histories.
