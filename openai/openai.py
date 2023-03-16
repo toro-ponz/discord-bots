@@ -8,7 +8,7 @@ from discord.ext import tasks
 
 from utils import Logger, DateTime
 
-# openai.api_key = os.environ.get('OPENAI_API_KEY')
+openai.api_key = os.environ.get('OPENAI_API_KEY')
 
 """
 OpenAI is a discord bot that based by GPT.
@@ -138,12 +138,11 @@ class OpenAI(Client):
         messages.append({'role': role, 'content': content})
         self.logger.debug(messages)
 
-        reply = 'This command is not implemented yet, dummy reply! Please send api key for openai to @toro_ponz :)'
-        # response = openai.ChatCompletion.create(
-        #     model='gpt-3.5-turbo',
-        #     messages=messages,
-        # )
-        # reply = response.choices[0]['message']['content'].strip()
+        response = openai.ChatCompletion.create(
+            model='gpt-3.5-turbo',
+            messages=messages,
+        )
+        reply = response.choices[0]['message']['content'].strip()
 
         messages.append({'role': 'assistant', 'content': reply})
         self.chat_histories[guild.id] = messages
