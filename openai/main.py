@@ -158,7 +158,7 @@ class OpenAI(Client):
 
         async with channel.typing():
             reply = await self.do_openai(guild, 'user', text)
-            self.logger.debug('do_user: reply=%s' % (reply))
+            self.logger.debug('do_user: guild=%s, channel=%s, reply=%s' % (guild.name, channel.name, reply))
             await channel.send(reply)
 
     """
@@ -173,7 +173,7 @@ class OpenAI(Client):
 
         async with channel.typing():
             reply = await self.do_openai(guild, 'system', text)
-            self.logger.debug('do_system: reply=%s' % (reply))
+            self.logger.debug('do_system: guild=%s, channel=%s, reply=%s' % (guild.name, channel.name, reply))
             await channel.send(reply)
 
     """
