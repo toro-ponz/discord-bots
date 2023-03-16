@@ -183,7 +183,7 @@ class OpenAI(Client):
     @param channel discord.Channel
     """
     async def do_history(self, guild, channel):
-        if (self.chat_histories.get(guild.id) is None or self.chat_histories.get(guild.id) == {}):
+        if (self.chat_histories.get(guild.id) is None):
             await channel.send('histories are empty.')
             return
 
@@ -196,7 +196,7 @@ class OpenAI(Client):
     @param channel discord.Channel
     """
     async def do_reset_history(self, guild, channel):
-        self.chat_histories[guild.id] = {}
+        self.chat_histories[guild.id] = None
         self.logger.info('reset chat histories for %s.' % (guild.name))
 
         if (channel is not None):
