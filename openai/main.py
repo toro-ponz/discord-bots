@@ -124,12 +124,12 @@ class OpenAI(Client):
     send message to openai.
 
     @param guild discord.Guild?
-    @param channel discord.Channel
+    @param channel discord.Channel or discord.DMChannel
     @param role string role of chat message
     @param text string content of chat message.
     """
     async def do_openai(self, guild, channel, role, text):
-        self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={channel.name}, role={role}, text={text}')
+        self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={getattr(channel, "name", channel.recipient.name)}, role={role}, text={text}')
 
         messages = []
         key = self.get_chat_history_key(guild, channel)
@@ -152,14 +152,14 @@ class OpenAI(Client):
                 self.logger.error(f'do_openai: {e}')
                 await channel.send(f'Sorry, got an error ({e.__class__}).')
             else:
-                self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={channel.name}, reply={reply}')
+                self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={getattr(channel, "name", channel.recipient.name)}, reply={reply}')
                 await channel.send(reply)
 
     """
     get chat histories.
 
     @param guild discord.Guild
-    @param channel discord.Channel
+    @param channel discord.Channel or discord.DMChannel
     """
     async def do_history(self, guild, channel):
         if (self.chat_histories.get(guild.id) is None):
@@ -172,7 +172,7 @@ class OpenAI(Client):
     reset chat histories.
 
     @param guild discord.Guild
-    @param channel discord.Channel
+    @param channel discord.Channel or discord.DMChannel
     """
     async def do_reset_history(self, guild, channel=None):
         self.chat_histories[guild.id] = None
@@ -184,7 +184,7 @@ class OpenAI(Client):
     """
     help.
 
-    @param channel discord.Channel
+    @param channel discord.Channel or discord.DMChannel
     """
     async def do_help(self, channel):
         text = textwrap.dedent("""
@@ -229,7 +229,7 @@ class OpenAI(Client):
     return chat history key
 
     @param guild discord.Guild
-    @param channel discord.Channel
+    @param channel discord.Channel or discord.DMChannel
     @return string
     """
     def get_chat_history_key(self, guild, channel):
