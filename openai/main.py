@@ -91,7 +91,7 @@ class OpenAI(Client):
             return
 
         if (commands[1] == 'system'):
-            await self.do_system(guild, channel, message.content.split(' ', 2)[2])
+            await self.do_openai(guild, channel, 'system', message.content.split(' ', 2)[2])
             return
         
         if (commands[1] == 'history'):
@@ -106,7 +106,7 @@ class OpenAI(Client):
             await self.do_help(channel)
             return
 
-        await self.do_user(guild, channel, message.content.split(' ', 1)[1])
+        await self.do_openai(guild, channel, 'user', message.content.split(' ', 1)[1])
 
     """
     loop tasks.
@@ -121,13 +121,13 @@ class OpenAI(Client):
                 self.do_reset_history(guild)
 
     """
-    send chat message to openai.
+    send chat to openai.
 
     @param guild discord.Guild
     @param role string role of openai message.
     @param content string content of openai message.
     """
-    async def do_openai(self, guild, role, content):
+    async def do_chat(self, guild, role, content):
         messages = []
 
         if (self.chat_histories.get(guild.id) is not None):
@@ -147,43 +147,24 @@ class OpenAI(Client):
         return reply
 
     """
-    send user message to openai.
+    send message to openai.
 
     @param guild discord.Guild
     @param channel discord.Channel
+    @param role string role of chat message
     @param text string content of chat message.
     """
-    async def do_user(self, guild, channel, text):
-        self.logger.debug(f'do_user: guild={guild.name}, channel={channel.name}, text={text}')
+    async def do_openai(self, guild, channel, role, text):
+        self.logger.debug(f'do_openai: guild={guild.name}, channel={channel.name}, role={role}, text={text}')
 
         async with channel.typing():
             try:
-                reply = await self.do_openai(guild, 'user', text)
+                reply = await self.do_chat(guild, role, text)
             except Exception as e:
-                self.logger.error(f'do_openai@do_user: {e}')
+                self.logger.error(f'do_openai@do_chat: {e}')
                 await channel.send(f'Sorry, got an error ({e.__class__}).')
             else:
-                self.logger.debug(f'do_user: guild={guild.name}, channel={channel.name}, reply={reply}')
-                await channel.send(reply)
-
-    """
-    send system message to openai.
-
-    @param guild discord.Guild
-    @param channel discord.Channel
-    @param text string content of chat message.
-    """
-    async def do_system(self, guild, channel, text):
-        self.logger.debug(f'do_system: guild={guild.name}, channel={channel.name}, text={text}')
-
-        async with channel.typing():
-            try:
-                reply = await self.do_openai(guild, 'system', text)
-            except Exception as e:
-                self.logger.error(f'do_openai@do_system: {e}')
-                await channel.send(f'Sorry, got an error ({e.__class__}).')
-            else:
-                self.logger.debug(f'do_system: guild={guild.name}, channel={channel.name}, reply={reply}')
+                self.logger.debug(f'do_openai: guild={guild.name}, channel={channel.name}, reply={reply}')
                 await channel.send(reply)
 
     """
