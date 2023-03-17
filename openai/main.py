@@ -129,7 +129,7 @@ class OpenAI(Client):
     @param text string content of chat message.
     """
     async def do_openai(self, guild, channel, role, text):
-        self.logger.debug(f'do_openai: guild={"None" if guild is None else guild.name}, channel={channel.name}, role={role}, text={text}')
+        self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={channel.name}, role={role}, text={text}')
 
         messages = []
         key = self.get_chat_history_key(guild, channel)
@@ -152,7 +152,7 @@ class OpenAI(Client):
                 self.logger.error(f'do_openai: {e}')
                 await channel.send(f'Sorry, got an error ({e.__class__}).')
             else:
-                self.logger.debug(f'do_openai: guild={"None" if guild is None else guild.name}, channel={channel.name}, reply={reply}')
+                self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={channel.name}, reply={reply}')
                 await channel.send(reply)
 
     """
