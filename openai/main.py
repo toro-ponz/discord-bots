@@ -129,7 +129,7 @@ class OpenAI(Client):
     @param text string content of chat message.
     """
     async def do_openai(self, guild, channel, role, text):
-        self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={getattr(channel, "name", channel.recipient.name)}, role={role}, text={text}')
+        self.logger.info(f'do_openai: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, role={role}, text={text}')
 
         messages = self.get_chat_history(guild, channel) or []
         messages.append({'role': role, 'content': text})
@@ -148,7 +148,7 @@ class OpenAI(Client):
             else:
                 messages.append({'role': 'assistant', 'content': reply})
                 self.set_chat_history(guild, channel, messages)
-                self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={getattr(channel, "name", channel.recipient.name)}, reply={reply}')
+                self.logger.info(f'do_openai: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, reply={reply}')
                 await channel.send(reply)
 
     """
@@ -174,7 +174,7 @@ class OpenAI(Client):
     """
     async def do_reset_history(self, guild, channel):
         self.set_chat_history(guild, channel, None)
-        self.logger.debug(f'do_reset_history: guild={"None" if guild is None else guild.name}, channel={getattr(channel, "name", channel.recipient.name)}')
+        self.logger.debug(f'do_reset_history: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}')
         await channel.send('reset history.')
 
     """
@@ -220,6 +220,36 @@ class OpenAI(Client):
         for role in roles:
             if (role.name == name):
                 return role
+
+    """
+    stringfy guild
+
+    @param guild discord.Guild
+    @return string
+    """
+    def get_guild_name(self, guild):
+        if (guild is None):
+            return 'None'
+        
+        return guild.name
+
+    """
+    stringfy channel
+
+    @param channel discord.Channel or discord.DMChannel
+    @return string
+    """
+    def get_channel_name(self, channel):
+        if (channel is None):
+            return 'None'
+        
+        if (hasattr(channel, "name")):
+            return channel.name
+        
+        if (hasattr(channel, "recipient")):
+            return channel.recipient.name
+        
+        return 'None'
 
     """
     return chat history key
