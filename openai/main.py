@@ -195,7 +195,7 @@ class OpenAI(Client):
     @param guild discord.Guild
     @param channel discord.Channel
     """
-    async def do_reset_history(self, guild, channel):
+    async def do_reset_history(self, guild, channel=None):
         self.chat_histories[guild.id] = None
         self.logger.info('reset chat histories for %s.' % (guild.name))
 
