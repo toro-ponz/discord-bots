@@ -121,50 +121,38 @@ class OpenAI(Client):
                 self.do_reset_history(guild)
 
     """
-    send chat to openai.
-
-    @param guild discord.Guild
-    @param role string role of openai message.
-    @param content string content of openai message.
-    """
-    async def do_chat(self, guild, role, content):
-        messages = []
-
-        if (self.chat_histories.get(guild.id) is not None):
-            messages = self.chat_histories.get(guild.id)
-
-        messages.append({'role': role, 'content': content})
-
-        response = await openai.ChatCompletion.acreate(
-            model='gpt-3.5-turbo',
-            messages=messages,
-        )
-        reply = response.choices[0]['message']['content'].strip()
-
-        messages.append({'role': 'assistant', 'content': reply})
-        self.chat_histories[guild.id] = messages
-
-        return reply
-
-    """
     send message to openai.
 
-    @param guild discord.Guild
+    @param guild discord.Guild?
     @param channel discord.Channel
     @param role string role of chat message
     @param text string content of chat message.
     """
     async def do_openai(self, guild, channel, role, text):
-        self.logger.debug(f'do_openai: guild={guild.name}, channel={channel.name}, role={role}, text={text}')
+        self.logger.debug(f'do_openai: guild={"None" if guild is None else guild.name}, channel={channel.name}, role={role}, text={text}')
+
+        messages = []
+        key = self.get_chat_history_key(guild, channel)
+
+        if (self.chat_histories.get(key) is not None):
+            messages = self.chat_histories.get(key)
+        
+        messages.append({'role': role, 'content': text})
 
         async with channel.typing():
             try:
-                reply = await self.do_chat(guild, role, text)
+                response = await openai.ChatCompletion.acreate(
+                    model='gpt-3.5-turbo',
+                    messages=messages,
+                )
+                reply = response.choices[0]['message']['content'].strip()
+                messages.append({'role': 'assistant', 'content': reply})
+                self.chat_histories[key] = messages
             except Exception as e:
-                self.logger.error(f'do_openai@do_chat: {e}')
+                self.logger.error(f'do_openai: {e}')
                 await channel.send(f'Sorry, got an error ({e.__class__}).')
             else:
-                self.logger.debug(f'do_openai: guild={guild.name}, channel={channel.name}, reply={reply}')
+                self.logger.debug(f'do_openai: guild={"None" if guild is None else guild.name}, channel={channel.name}, reply={reply}')
                 await channel.send(reply)
 
     """
@@ -236,6 +224,19 @@ class OpenAI(Client):
         for role in roles:
             if (role.name == name):
                 return role
+
+    """
+    return chat history key
+
+    @param guild discord.Guild
+    @param channel discord.Channel
+    @return string
+    """
+    def get_chat_history_key(self, guild, channel):
+        if (guild is not None):
+            return f'{guild.id}-{channel.id}'
+        
+        return f'{channel.id}'
 
 
 client = OpenAI(os.environ.get('TOKEN', None))
