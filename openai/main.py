@@ -154,11 +154,11 @@ class OpenAI(Client):
     @param text string content of chat message.
     """
     async def do_user(self, guild, channel, text):
-        self.logger.debug('do_user: guild=%s, channel=%s, text=%s' % (guild.name, channel.name, text))
+        self.logger.debug(f'do_user: guild={guild.name}, channel={channel.name}, text={text}')
 
         async with channel.typing():
             reply = await self.do_openai(guild, 'user', text)
-            self.logger.debug('do_user: guild=%s, channel=%s, reply=%s' % (guild.name, channel.name, reply))
+            self.logger.debug(f'do_user: guild={guild.name}, channel={channel.name}, reply={reply}')
             await channel.send(reply)
 
     """
@@ -169,11 +169,11 @@ class OpenAI(Client):
     @param text string content of chat message.
     """
     async def do_system(self, guild, channel, text):
-        self.logger.debug('do_system: guild=%s, channel=%s, text=%s' % (guild.name, channel.name, text))
+        self.logger.debug(f'do_system: guild={guild.name}, channel={channel.name}, text={text}')
 
         async with channel.typing():
             reply = await self.do_openai(guild, 'system', text)
-            self.logger.debug('do_system: guild=%s, channel=%s, reply=%s' % (guild.name, channel.name, reply))
+            self.logger.debug(f'do_system: guild={guild.name}, channel={channel.name}, reply={reply}')
             await channel.send(reply)
 
     """
@@ -197,7 +197,7 @@ class OpenAI(Client):
     """
     async def do_reset_history(self, guild, channel=None):
         self.chat_histories[guild.id] = None
-        self.logger.info('reset chat histories for %s.' % (guild.name))
+        self.logger.debug(f'do_reset_history: guild={guild.name}')
 
         if (channel is not None):
             await channel.send('reset history.')
