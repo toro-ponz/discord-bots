@@ -157,9 +157,14 @@ class OpenAI(Client):
         self.logger.debug(f'do_user: guild={guild.name}, channel={channel.name}, text={text}')
 
         async with channel.typing():
-            reply = await self.do_openai(guild, 'user', text)
-            self.logger.debug(f'do_user: guild={guild.name}, channel={channel.name}, reply={reply}')
-            await channel.send(reply)
+            try:
+                reply = await self.do_openai(guild, 'user', text)
+            except Exception as e:
+                self.logger.error(f'do_openai@do_user: {e}')
+                await channel.send(f'Sorry, got an error ({e.__class__}).')
+            else:
+                self.logger.debug(f'do_user: guild={guild.name}, channel={channel.name}, reply={reply}')
+                await channel.send(reply)
 
     """
     send system message to openai.
@@ -172,9 +177,14 @@ class OpenAI(Client):
         self.logger.debug(f'do_system: guild={guild.name}, channel={channel.name}, text={text}')
 
         async with channel.typing():
-            reply = await self.do_openai(guild, 'system', text)
-            self.logger.debug(f'do_system: guild={guild.name}, channel={channel.name}, reply={reply}')
-            await channel.send(reply)
+            try:
+                reply = await self.do_openai(guild, 'system', text)
+            except Exception as e:
+                self.logger.error(f'do_openai@do_system: {e}')
+                await channel.send(f'Sorry, got an error ({e.__class__}).')
+            else:
+                self.logger.debug(f'do_system: guild={guild.name}, channel={channel.name}, reply={reply}')
+                await channel.send(reply)
 
     """
     get chat histories.
