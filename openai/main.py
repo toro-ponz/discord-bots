@@ -131,12 +131,7 @@ class OpenAI(Client):
     async def do_openai(self, guild, channel, role, text):
         self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={getattr(channel, "name", channel.recipient.name)}, role={role}, text={text}')
 
-        messages = []
-        key = self.get_chat_history_key(guild, channel)
-
-        if (self.chat_histories.get(key) is not None):
-            messages = self.chat_histories.get(key)
-        
+        messages = self.get_chat_history(guild, channel) or []
         messages.append({'role': role, 'content': text})
 
         async with channel.typing():
@@ -146,12 +141,13 @@ class OpenAI(Client):
                     messages=messages,
                 )
                 reply = response.choices[0]['message']['content'].strip()
-                messages.append({'role': 'assistant', 'content': reply})
-                self.chat_histories[key] = messages
+
             except Exception as e:
                 self.logger.error(f'do_openai: {e}')
                 await channel.send(f'Sorry, got an error ({e.__class__}).')
             else:
+                messages.append({'role': 'assistant', 'content': reply})
+                self.set_chat_history(guild, channel, messages)
                 self.logger.info(f'do_openai: guild={"None" if guild is None else guild.name}, channel={getattr(channel, "name", channel.recipient.name)}, reply={reply}')
                 await channel.send(reply)
 
@@ -162,11 +158,13 @@ class OpenAI(Client):
     @param channel discord.Channel or discord.DMChannel
     """
     async def do_history(self, guild, channel):
-        if (self.chat_histories.get(guild.id) is None):
+        histories = self.get_chat_history(guild, channel)
+
+        if (histories is None):
             await channel.send('histories are empty.')
             return
 
-        await channel.send('%s' % (self.chat_histories.get(guild.id)))
+        await channel.send(histories)
 
     """
     reset chat histories.
@@ -174,12 +172,10 @@ class OpenAI(Client):
     @param guild discord.Guild
     @param channel discord.Channel or discord.DMChannel
     """
-    async def do_reset_history(self, guild, channel=None):
-        self.chat_histories[guild.id] = None
-        self.logger.debug(f'do_reset_history: guild={guild.name}')
-
-        if (channel is not None):
-            await channel.send('reset history.')
+    async def do_reset_history(self, guild, channel):
+        self.set_chat_history(guild, channel, None)
+        self.logger.debug(f'do_reset_history: guild={"None" if guild is None else guild.name}, channel={getattr(channel, "name", channel.recipient.name)}')
+        await channel.send('reset history.')
 
     """
     help.
@@ -237,6 +233,30 @@ class OpenAI(Client):
             return f'{guild.id}-{channel.id}'
         
         return f'{channel.id}'
+
+    """
+    return chat history
+
+    @param guild discord.Guild
+    @param channel discord.Channel or discord.DMChannel
+    @return array
+    """
+    def get_chat_history(self, guild, channel):
+        key = self.get_chat_history_key(guild, channel)
+
+        return self.chat_histories.get(key)
+
+    """
+    set chat history
+
+    @param guild discord.Guild
+    @param channel discord.Channel or discord.DMChannel
+    @param histories array
+    """
+    def set_chat_history(self, guild, channel, histories):
+        key = self.get_chat_history_key(guild, channel)
+
+        self.chat_histories[key] = histories
 
 
 client = OpenAI(os.environ.get('TOKEN', None))
