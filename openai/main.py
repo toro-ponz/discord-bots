@@ -128,7 +128,7 @@ class OpenAI(Client):
     @param text string content of chat message.
     """
     async def do_openai(self, guild, channel, role, text):
-        self.logger.info(f'do_openai: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, role={role}, text={text}')
+        self.logger.info(f'do_openai: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, role={role}, text={" ".join(text.splitlines())}')
 
         messages = self.get_chat_history(guild, channel) or []
         messages.append({'role': role, 'content': text})
@@ -147,7 +147,7 @@ class OpenAI(Client):
             else:
                 messages.append({'role': 'assistant', 'content': reply})
                 self.set_chat_history(guild, channel, messages)
-                self.logger.info(f'do_openai: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, reply={reply}')
+                self.logger.info(f'do_openai: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, reply={" ".join(reply.splitlines())}')
                 await channel.send(reply)
 
     """
