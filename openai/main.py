@@ -117,8 +117,7 @@ class OpenAI(Client):
         self.logger.debug('started watch at %s.' % (now))
 
         if (now.hour == self.history_reset_hour):
-            for guild in self.guilds:
-                self.do_reset_history(guild)
+            self.reset_all_chat_history()
 
     """
     send message to openai.
@@ -287,6 +286,12 @@ class OpenAI(Client):
         key = self.get_chat_history_key(guild, channel)
 
         self.chat_histories[key] = histories
+
+    """
+    reset all chat history
+    """
+    def reset_all_chat_history(self):
+        self.chat_histories = {}
 
 
 client = OpenAI(os.environ.get('TOKEN', None))
