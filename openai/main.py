@@ -91,7 +91,11 @@ class OpenAI(Client):
             return
 
         if (commands[1] == 'system'):
-            await self.do_openai(guild, channel, 'system', message.content.split(' ', 2)[2])
+            await self.do_openai_chat(guild, channel, 'system', message.content.split(' ', 2)[2])
+            return
+
+        if (commands[1] == 'image'):
+            await self.do_openai_image(guild, channel, message.content.split(' ', 2)[2])
             return
         
         if (commands[1] == 'history'):
@@ -106,7 +110,7 @@ class OpenAI(Client):
             await self.do_help(channel)
             return
 
-        await self.do_openai(guild, channel, 'user', message.content.split(' ', 1)[1])
+        await self.do_openai_chat(guild, channel, 'user', message.content.split(' ', 1)[1])
 
     """
     loop tasks.
@@ -120,15 +124,15 @@ class OpenAI(Client):
             self.reset_all_chat_history()
 
     """
-    send message to openai.
+    send chat message to openai.
 
     @param guild discord.Guild?
     @param channel discord.Channel or discord.DMChannel
     @param role string role of chat message
     @param text string content of chat message.
     """
-    async def do_openai(self, guild, channel, role, text):
-        self.logger.info(f'do_openai: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, role={role}, text={" ".join(text.splitlines())}')
+    async def do_openai_chat(self, guild, channel, role, text):
+        self.logger.info(f'do_openai_chat: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, role={role}, text={" ".join(text.splitlines())}')
 
         messages = self.get_chat_history(guild, channel) or []
         messages.append({'role': role, 'content': text})
@@ -140,15 +144,40 @@ class OpenAI(Client):
                     messages=messages,
                 )
                 reply = response.choices[0]['message']['content'].strip()
-
             except Exception as e:
-                self.logger.error(f'do_openai: {e}')
+                self.logger.error(f'do_openai_chat: {e}')
                 await channel.send(f'Sorry, got an error ({e.__class__}).')
             else:
                 messages.append({'role': 'assistant', 'content': reply})
                 self.set_chat_history(guild, channel, messages)
-                self.logger.info(f'do_openai: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, reply={" ".join(reply.splitlines())}')
+                self.logger.info(f'do_openai_chat: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, reply={" ".join(reply.splitlines())}')
                 await channel.send(reply)
+
+    """
+    send image message to openai.
+
+    @param guild discord.Guild?
+    @param channel discord.Channel or discord.DMChannel
+    @param text string content of chat message.
+    """
+    async def do_openai_image(self, guild, channel, text):
+        self.logger.info(f'do_openai_image: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)},text={" ".join(text.splitlines())}')
+
+        async with channel.typing():
+            try:
+                response = await openai.Image.acreate(
+                    prompt=text,
+                    n=1,
+                    size='1024x1024'
+                )
+                reply = response['data'][0]['url']
+            except Exception as e:
+                self.logger.error(f'do_openai_image: {e}')
+                await channel.send(f'Sorry, got an error ({e.__class__}).')
+            else:
+                self.logger.info(f'do_openai_image: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, reply={" ".join(reply.splitlines())}')
+                await channel.send(reply)
+
 
     """
     get chat histories.
@@ -188,6 +217,7 @@ class OpenAI(Client):
         ---
         <message>         send user message(role=user).
         system <message>  send system message(role=system).
+        image <message>   generate image by message.
         history           get chat history.
         reset             reset chat history.
         help              list available commands and some.
