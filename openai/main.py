@@ -161,7 +161,7 @@ class OpenAI(Client):
     @param text string content of chat message.
     """
     async def do_openai_image(self, guild, channel, text):
-        self.logger.info(f'do_openai_image: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)},text={" ".join(text.splitlines())}')
+        self.logger.info(f'do_openai_image: guild={self.get_guild_name(guild)}, channel={self.get_channel_name(channel)}, text={" ".join(text.splitlines())}')
 
         async with channel.typing():
             try:
